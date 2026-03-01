@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Dealer's Grift</title>
+    <style>
+        :root { --gold: #f1c40f; --green: #00ff41; --bg: #050505; --red: #ff4141; }
+        
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: var(--bg); 
+            color: var(--green); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            margin: 0; 
+            height: 100vh;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container { 
+            border: 1px solid var(--green); 
+            padding: 25px; 
+            width: 90%; 
+            max-width: 450px; 
+            background: rgba(0,0,0,0.95); 
+            position: relative; 
+            box-shadow: 0 0 30px rgba(0,255,65,0.15); 
+            border-radius: 12px; 
+        }
+
+        #timer { 
+            font-size: 3.2rem; 
+            color: var(--gold); 
+            cursor: help; 
+            margin-bottom: 10px; 
+            text-align: center;
+            text-shadow: 0 0 15px rgba(241,196,15,0.4); 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #question-area { 
+            min-height: 100px; 
+            font-size: 1.15rem; 
+            border-left: 4px solid var(--green); 
+            padding-left: 15px; 
+            margin-bottom: 30px; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-group { display: flex; gap: 15px; }
+
+        button { 
+            flex: 1; 
+            background: transparent; 
+            border: 1px solid var(--green); 
+            color: var(--green); 
+            padding: 22px 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem; 
+            transition: 0.2s; 
+            border-radius: 4px; 
+            text-transform: uppercase;
+        }
+
+        button:active { background: var(--green); color: black; transform: scale(0.95); }
+
+        #cheat-overlay { 
+            position: absolute; 
+            top: 10px; 
+            right: 15px; 
+            font-size: 0.7rem; 
+            color: var(--gold); 
+            opacity: 0; 
+            transition: 0.2s; 
+            pointer-events: none; 
+        }
+
+        .hidden { display: none; }
+
+        #final-card { font-size: 4rem; color: var(--gold); margin: 10px 0; letter-spacing: 4px; }
+        
+        .cold-read { 
+            font-style: italic; 
+            color: #888; 
+            margin-top: 15px; 
+            font-size: 0.9rem; 
+            border-top: 1px solid #333; 
+            padding-top: 15px; 
+            line-height: 1.4;
+        }
+
+        .rank-tag { font-size: 0.7rem; color: #444; margin-top: 25px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="cheat-overlay">HUD: [PEEK ACTIVE]</div>
+    <div id="timer" onmousedown="showPeek()" onmouseup="hidePeek()" ontouchstart="showPeek()" ontouchend="hidePeek()">0.00s</div>
+    
+    <div id="game-screen">
+        <div id="question-area">NEURAL SCAN READY...<br>SELECT STARTING SIDE.</div>
+        <div class="btn-group">
+            <button onclick="process(false)" id="btn-n">SIDE A (ANTE)</button>
+            <button onclick="process(true)" id="btn-y">SIDE B (SHOWDOWN)</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden" style="text-align: center;">
+        <h2 id="final-card">---</h2>
+        <p id="final-hand" style="color:white; font-size: 1.1rem; margin: 0;">---</p>
+        <div id="final-reading" class="cold-read">---</div>
+        
+        <div style="border-top: 1px solid #222; margin-top: 20px; padding-top: 15px; font-size: 0.8rem;">
+            TIME: <span id="final-time" style="color:var(--gold)">0</span>s | 
+            RANK: <span id="rank" style="color:var(--gold)">---</span>
+        </div>
+        <button onclick="location.reload()" style="margin-top:20px; width:100%; border-color: var(--gold); color: var(--gold);">RESET SCAN</button>
+    </div>
+</div>
+
+<div class="rank-tag">GM: &lt; 8s | SHARK: &lt; 12s | RECRUIT: 12s+</div>
+
+<script>
+    // Complete 32-card logic with Personality Mapping
+    const cardData = {
+        0:  ["7s", "High Card", "You chose the most invisible card. Subtle and observant."],
+        1:  ["As", "One Pair", "The Ace of Spades. You appreciate the classic power."],
+        2:  ["8d", "Two Pair", "Sharp, diamond-cut logic. You're a natural strategist."],
+        3:  ["10s", "3 of Kind", "Grounded but heavy-hitting. You value stability."],
+        4:  ["Jh", "Straight", "Emotional and structured. A romantic at heart."],
+        5:  ["Qs", "Flush", "Fluid and elegant. You move with the current."],
+        6:  ["Jc", "Full House", "Complex and layered. You see the whole board."],
+        7:  ["Ks", "Royal Flush", "Top-tier ambition. You play to win everything."],
+        8:  ["9h", "High Card (Alt)", "Understated. You like staying a step ahead."],
+        9:  ["8c", "One Pair (Alt)", "Practical and hardy. You focus on the work."],
+        10: ["Ah", "Two Pair (Alt)", "Prestigious and warm. You have high standards."],
+        11: ["8h", "3 of Kind (Alt)", "Balanced and rhythmic. You find the pattern."],
+        12: ["6c", "Straight (Alt)", "Calculated. You enjoy
