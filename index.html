@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="apple-touch-icon" href="grift_icon.png">
+    <title>The Dealer's Grift: Authentic</title>
+    <style>
+        :root { --gold: #f1c40f; --green: #00ff41; --bg: #050505; }
+        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--green); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; height: 100vh; justify-content: center; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        .container { border: 1px solid var(--green); padding: 25px; width: 90%; max-width: 420px; background: rgba(0,0,0,0.95); position: relative; border-radius: 12px; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
+        #timer { font-size: 3.5rem; color: var(--gold); text-align: center; margin-bottom: 15px; cursor: help; user-select: none; }
+        #question-area { min-height: 100px; color: white; border-left: 3px solid var(--green); padding-left: 15px; margin-bottom: 30px; text-transform: uppercase; line-height: 1.4; display: flex; align-items: center; }
+        .btn-group { display: flex; gap: 15px; }
+        button { flex: 1; background: transparent; border: 1px solid var(--green); color: var(--green); padding: 22px; font-family: 'Courier New'; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
+        button:active { background: var(--green); color: black; }
+        .hidden { display: none; }
+        #final-card { font-size: 5rem; color: var(--gold); text-align: center; font-weight: bold; margin: 10px 0; }
+        .hand-label { color: #888; text-align: center; font-style: italic; font-size: 1rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="peek-overlay" style="position:absolute; top:10px; right:15px; font-size:0.7rem; color:var(--gold); opacity:0;">PEEK</div>
+    <div id="timer" ontouchstart="showPeek()" ontouchend="hidePeek()" onmousedown="showPeek()" onmouseup="hidePeek()">0.00s</div>
+    <div id="game-screen">
+        <div id="question-area">SCANNING AUTHENTIC DECK...<br>DETERMINE TARGET SIDE.</div>
+        <div class="btn-group">
+            <button onclick="process(false)">SIDE A</button>
+            <button onclick="process(true)">SIDE B</button>
+        </div>
+    </div>
+    <div id="result-screen" class="hidden">
+        <div id="final-card">--</div>
+        <p id="final-hand" class="hand-label">--</p>
+        <button onclick="location.reload()" style="width:100%; border-color:var(--gold); color:var(--gold); margin-top:20px;">NEW SCAN</button>
+    </div>
+</div>
+
+<script>
+    // Mapped to the Poker-Legal 32-Address Matrix
+    const cardMap = {
+        0:"8♣", 1:"7♣", 2:"8♠", 3:"2♠", 4:"6♠", 5:"7♠", 6:"J♠", 7:"A♠",
+        8:"7♥", 9:"K♥", 10:"K♣", 11:"K♠", 12:"10♣", 13:"Q♥", 14:"Q♣", 15:"Q♠",
+        16:"3♣", 17:"2♥", 18:"5♣", 19:"5♥", 20:"6♥", 21:"7♥", 22:"8♥", 23:"9♥",
+        24:"7♦", 25:"6♦", 26:"3♦", 27:"10♦", 28:"J♦", 29:"Q♦", 30:"K♦", 31:"A♦"
+    };
+
+    const steps = [
+        { v: 16, q: "Visual: Side A or Side B?" },
+        { v: 8,  q: "Temp: Is the card Red?" },
+        { v: 4,  q: "Suit: Pointed (Spade/Diamond)?" },
+        { v: 2,  q: "Rank: High (10, J, Q, K, A)?" },
+        { v: 1,  q: "Face: Is it a J, Q, or K?" }
+    ];
+
+    let currentStep = 0, total = 0, startTime, timerInterval;
+
+    function showPeek() {
+        if(startTime) {
+            document.getElementById('peek-overlay').innerText = "PEEK: " + (cardMap[total] || "SUM "+total);
+            document.getElementById('peek-overlay').style.opacity = 1;
+        }
+    }
+    function hidePeek() { document.getElementById('peek-overlay').style.opacity = 0; }
+
+    function process(isYes) {
+        if (currentStep === 0) {
+            startTime = Date.now();
+            timerInterval = setInterval(() => { document.getElementById('timer').innerText = ((Date.now()-startTime)/1000).toFixed(2)+"s"; }, 50);
+        }
+        if (isYes) total += steps[currentStep].v;
+        currentStep++;
+        if (currentStep < steps.length) {
+            document.getElementById('question-area').innerText = steps[currentStep].q;
+        } else {
+            finish();
+        }
+    }
+
+    function finish() {
+        clearInterval(timerInterval);
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('final-card').innerText = cardMap[total] || "??";
+        document.getElementById('final-hand').innerText = "NEURAL SCAN COMPLETE";
+    }
+</script>
+</body>
+</html>
