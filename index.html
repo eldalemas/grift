@@ -3,88 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="apple-touch-icon" href="grift_icon.png">
-    <title>Binary Poker</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Binary Poker Lab</title>
+    
+    <link rel="apple-touch-icon" href="https://img.icons8.com/nolan/512/poker-cards.png">
+    
     <style>
-        :root { --gold: #f1c40f; --green: #00ff41; --bg: #050505; }
-        body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--green); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; height: 100vh; justify-content: center; -webkit-tap-highlight-color: transparent; overflow: hidden; }
-        .container { border: 1px solid var(--green); padding: 25px; width: 90%; max-width: 420px; background: rgba(0,0,0,0.95); position: relative; border-radius: 12px; box-shadow: 0 0 20px rgba(0,255,65,0.2); }
-        #timer { font-size: 3.5rem; color: var(--gold); text-align: center; margin-bottom: 15px; cursor: help; user-select: none; }
-        #question-area { min-height: 100px; color: white; border-left: 3px solid var(--green); padding-left: 15px; margin-bottom: 30px; text-transform: uppercase; line-height: 1.4; display: flex; align-items: center; }
-        .btn-group { display: flex; gap: 15px; }
-        button { flex: 1; background: transparent; border: 1px solid var(--green); color: var(--green); padding: 22px; font-family: 'Courier New'; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
-        button:active { background: var(--green); color: black; }
-        .hidden { display: none; }
-        #final-card { font-size: 5rem; color: var(--gold); text-align: center; font-weight: bold; margin: 10px 0; }
-        .hand-label { color: #888; text-align: center; font-style: italic; font-size: 1rem; }
+        :root { 
+            --neon: #00ffcc; --bg: #050505; --card-bg: #111; 
+            --hit: #00ff88; --miss: #ff3366; --doubt: #ffaa00; --ghost: #444;
+        }
+        body { 
+            background-color: var(--bg); color: #d0d0d0; font-family: 'Inter', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; margin: 0; overflow: hidden;
+            -webkit-touch-callout: none; -webkit-user-select: none;
+        }
+
+        #participant { height: 40px; display: flex; gap: 20px; align-items: center; margin-bottom: 15px; }
+        .eye { width: 35px; height: 8px; background: #222; border-radius: 50%; border: 1px solid #333; transition: 0.3s; }
+        .hit .eye { background: var(--hit); height: 15px; box-shadow: 0 0 15px var(--hit); }
+        .miss .eye { background: var(--miss); height: 3px; transform: rotate(10deg); }
+        .doubt .eye { height: 2px; background: var(--doubt); transform: translateY(4px); }
+
+        .main-box { 
+            background: var(--card-bg); border: 1px solid #222; padding: 1.5rem; border-radius: 24px; 
+            text-align: center; width: 90vw; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); position: relative;
+        }
+
+        #prompter { 
+            background: #000; border-left: 4px solid var(--neon); padding: 12px; margin-bottom: 15px; 
+            text-align: left; min-height: 70px; font-style: italic; font-size: 0.85rem; line-height: 1.4;
+        }
+        .script-label { font-style: normal; font-weight: bold; font-size: 0.6rem; text-transform: uppercase; color: #555; margin-bottom: 4px; display: block; }
+
+        .timer-container { width: 100%; height: 3px; background: #1a1a1a; margin-bottom: 15px; border-radius: 2px; overflow: hidden; opacity: 0; }
+        #timer-bar { width: 100%; height: 100%; background: var(--neon); }
+        .timer-visible { opacity: 1; }
+
+        #display-hand { font-size: 1.1rem; font-weight: bold; color: var(--neon); margin-bottom: 10px; letter-spacing: 1px; transition: 0.3s; }
+        .ghost-text { color: var(--ghost) !important; filter: blur(4px); }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        button { 
+            padding: 15px; background: #0a0a0a; border: 1px solid #222; color: #777; 
+            border-radius: 12px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; font-weight: 600;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button:hover:not(:disabled) { border-color: var(--neon); color: #fff; }
+        button:active:not(:disabled) { background: #1a1a1a; }
+        button:disabled { opacity: 0.1; }
+        
+        #btn-ready { grid-column: span 2; border-color: var(--neon); color: #fff; padding: 18px; }
+
+        .mastery-row { 
+            display: flex; justify-content: space-between; margin-top: 15px; 
+            font-size: 0.6rem; color: #444; border-top: 1px solid #222; padding-top: 10px; 
+        }
+
+        .toggle-group { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+        .mode-toggle { font-size: 0.6rem; color: #444; cursor: pointer; text-decoration: underline; padding: 5px; }
+        .active-mode { color: var(--doubt) !important; font-weight: bold; }
+
+        #cheat-sheet { display: none; font-size: 0.55rem; color: #555; margin-top: 10px; text-align: left; background: #000; padding: 8px; border-radius: 5px; line-height: 1.3; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div id="peek-overlay" style="position:absolute; top:10px; right:15px; font-size:0.7rem; color:var(--gold); opacity:0;">PEEK</div>
-    <div id="timer" ontouchstart="showPeek()" ontouchend="hidePeek()" onmousedown="showPeek()" onmouseup="hidePeek()">0.00s</div>
-    <div id="game-screen">
-        <div id="question-area">SCANNING AUTHENTIC DECK...<br>DETERMINE TARGET SIDE.</div>
-        <div class="btn-group">
-            <button onclick="process(false)">SIDE A</button>
-            <button onclick="process(true)">SIDE B</button>
-        </div>
+
+<div id="participant">
+    <div class="eye"></div>
+    <div class="eye"></div>
+</div>
+
+<div class="main-box">
+    <div id="display-hand">BINARY POKER</div>
+    
+    <div class="timer-container" id="t-container">
+        <div id="timer-bar"></div>
     </div>
-    <div id="result-screen" class="hidden">
-        <div id="final-card">--</div>
-        <p id="final-hand" class="hand-label">--</p>
-        <button onclick="location.reload()" style="width:100%; border-color:var(--gold); color:var(--gold); margin-top:20px;">NEW SCAN</button>
+
+    <div id="prompter">
+        <span class="script-label">Binary Poker Protocol</span>
+        <div id="script-text">Upload to iPhone and tap 'Add to Home Screen'...</div>
+    </div>
+
+    <div class="btn-grid">
+        <button id="btn-ready" onclick="startTimeAttack()">RECALL & START</button>
+        <button id="btn-Grinder" onclick="check('strength', 'Grinder')" disabled>FOLD</button>
+        <button id="btn-Premium" onclick="check('strength', 'Premium')" disabled>ALL-IN</button>
+        <button id="btn-Red" onclick="check('color', 'Red')" disabled>VIBRANT</button>
+        <button id="btn-Black" onclick="check('color', 'Black')" disabled>HEAVY</button>
+        <button id="btn-pointy" onclick="check('shape', 'pointy')" disabled>PIERCE</button>
+        <button id="btn-round" onclick="check('shape', 'round')" disabled>CURVE</button>
+    </div>
+
+    <div class="mastery-row">
+        <div>ACCURACY: <span id="session-acc" style="color:var(--neon)">0%</span></div>
+        <div>BEST STREAK: <span id="best-streak" style="color:var(--hit)">0</span></div>
+    </div>
+
+    <div class="toggle-group">
+        <span id="ghost-toggle" class="mode-toggle" onclick="toggleGhost()">GHOST MODE: OFF</span>
+        <span class="mode-toggle" onclick="toggleCheat()">MATRIX CHEAT</span>
+    </div>
+    
+    <div id="cheat-sheet">
+        1:H(2s4d5c7h9s) 2:P(3h3d6c8sJh) 3:2P(4s4c5d5hQs) 4:3(2c2d2h8dKc) 5:S(5s6h7d8c9h)<br>
+        6:F(258JKs) 7:FH(QQQAA) 8:4(10s10h10d10c3h) 9:SF(6-10d) 10:RF(10-Ac)
     </div>
 </div>
 
 <script>
-    // Mapped to the Poker-Legal 32-Address Matrix
-    const cardMap = {
-        0:"8♣", 1:"7♣", 2:"8♠", 3:"2♠", 4:"6♠", 5:"7♠", 6:"J♠", 7:"A♠",
-        8:"7♥", 9:"K♥", 10:"K♣", 11:"K♠", 12:"10♣", 13:"Q♥", 14:"Q♣", 15:"Q♠",
-        16:"3♣", 17:"2♥", 18:"5♣", 19:"5♥", 20:"6♥", 21:"7♥", 22:"8♥", 23:"9♥",
-        24:"7♦", 25:"6♦", 26:"3♦", 27:"10♦", 28:"J♦", 29:"Q♦", 30:"K♦", 31:"A♦"
+    const matrix = {
+        1: { name: "1: HIGH CARD", cards: ["2♠", "4♦", "5♣", "7♥", "9♠"] },
+        2: { name: "2: ONE PAIR", cards: ["3♥", "3♦", "6♣", "8♠", "J♥"] },
+        3: { name: "3: TWO PAIR", cards: ["4♠", "4♣", "5♦", "5♥", "Q♠"] },
+        4: { name: "4: THREE OF A KIND", cards: ["2♣", "2♦", "2♥", "8♦", "K♣"] },
+        5: { name: "5: STRAIGHT", cards: ["5♠", "6♥", "7♦", "8♣", "9♥"] },
+        6: { name: "6: FLUSH", cards: ["2♠", "5♠", "8♠", "J♠", "K♠"] },
+        7: { name: "7: FULL HOUSE", cards: ["Q♥", "Q♦", "Q♣", "A♠", "A♦"] },
+        8: { name: "8: FOUR OF A KIND", cards: ["10♠", "10♥", "10♦", "10♣", "3♥"] },
+        9: { name: "9: STRAIGHT FLUSH", cards: ["6♦", "7♦", "8♦", "9♦", "10♦"] },
+        10: { name: "10: ROYAL FLUSH", cards: ["10♣", "J♣", "Q♣", "K♣", "A♣"] }
     };
 
-    const steps = [
-        { v: 16, q: "Visual: Side A or Side B?" },
-        { v: 8,  q: "Temp: Is the card Red?" },
-        { v: 4,  q: "Suit: Pointed (Spade/Diamond)?" },
-        { v: 2,  q: "Rank: High (10, J, Q, K, A)?" },
-        { v: 1,  q: "Face: Is it a J, Q, or K?" }
-    ];
+    const patter = {
+        strength: ["Would you <b>Fold</b>, or go <b>All-In</b>?", "Is this a <b>Premium</b> hand, or a modest <b>Grinder</b>?"],
+        color: ["Is it a <b>Vibrant</b> heat, or a <b>Heavy</b> cold black?", "Is the energy <b>Warm</b> (Red), or <b>Cool</b> (Black)?"],
+        shape: ["Do you feel <b>Sharp</b> points, or <b>Soft</b> curves?", "Is it <b>Jagged</b> (Pointy) or <b>Smooth</b> (Round)?"]
+    };
 
-    let currentStep = 0, total = 0, startTime, timerInterval;
+    let target = null, currentPhase = -1, timerInterval = null, ghostMode = false;
+    let sTotal = 0, sCorrect = 0, cStreak = 0;
+    let bestStreak = localStorage.getItem('deductionBestStreak') || 0;
+    document.getElementById('best-streak').innerText = bestStreak;
 
-    function showPeek() {
-        if(startTime) {
-            document.getElementById('peek-overlay').innerText = "PEEK: " + (cardMap[total] || "SUM "+total);
-            document.getElementById('peek-overlay').style.opacity = 1;
-        }
+    function init() {
+        clearInterval(timerInterval);
+        const rank = Math.floor(Math.random() * 10) + 1;
+        const hand = matrix[rank];
+        const cardStr = hand.cards[Math.floor(Math.random() * 5)];
+        const suit = cardStr.slice(-1);
+        
+        target = {
+            full: cardStr,
+            strength: rank <= 5 ? 'Grinder' : 'Premium',
+            color: (suit === '♥' || suit === '♦') ? 'Red' : 'Black',
+            shape: (suit === '♠' || suit === '♦') ? 'pointy' : 'round'
+        };
+
+        currentPhase = -1;
+        const display = document.getElementById('display-hand');
+        display.innerText = hand.name;
+        display.style.color = "var(--neon)";
+        display.classList.toggle('ghost-text', ghostMode);
+        
+        document.getElementById('script-text').innerText = "Visualize the 5 cards. Start when ready.";
+        document.getElementById('t-container').classList.remove('timer-visible');
+        document.getElementById('participant').className = "";
+        toggleButtons(true);
     }
-    function hidePeek() { document.getElementById('peek-overlay').style.opacity = 0; }
 
-    function process(isYes) {
-        if (currentStep === 0) {
-            startTime = Date.now();
-            timerInterval = setInterval(() => { document.getElementById('timer').innerText = ((Date.now()-startTime)/1000).toFixed(2)+"s"; }, 50);
-        }
-        if (isYes) total += steps[currentStep].v;
-        currentStep++;
-        if (currentStep < steps.length) {
-            document.getElementById('question-area').innerText = steps[currentStep].q;
+    function startTimeAttack() {
+        currentPhase = 0;
+        toggleButtons(false);
+        document.getElementById('t-container').classList.add('timer-visible');
+        document.getElementById('script-text').innerHTML = patter.strength[Math.floor(Math.random()*2)];
+        
+        let width = 100;
+        timerInterval = setInterval(() => {
+            width -= 0.85; 
+            document.getElementById('timer-bar').style.width = width + "%";
+            if (width < 35) document.getElementById('participant').className = "doubt";
+            if (width <= 0) fail("CONNECTION FADED");
+        }, 100);
+    }
+
+    function check(prop, val) {
+        if (target[prop] === val) {
+            currentPhase++;
+            react('hit');
+            if (currentPhase === 1) document.getElementById('script-text').innerHTML = patter.color[Math.floor(Math.random()*2)];
+            else if (currentPhase === 2) document.getElementById('script-text').innerHTML = patter.shape[Math.floor(Math.random()*2)];
+            else if (currentPhase === 3) finish();
         } else {
-            finish();
+            fail("MISREAD: " + target.full);
         }
     }
 
     function finish() {
         clearInterval(timerInterval);
-        document.getElementById('game-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('final-card').innerText = cardMap[total] || "??";
-        document.getElementById('final-hand').innerText = "NEURAL SCAN COMPLETE";
+        sCorrect++; sTotal++; cStreak++;
+        if(cStreak > bestStreak) {
+            bestStreak = cStreak;
+            localStorage.setItem('deductionBestStreak', bestStreak);
+        }
+        const display = document.getElementById('display-hand');
+        display.innerText = target.full;
+        display.classList.remove('ghost-text');
+        display.style.color = target.color === 'Red' ? '#ff4d4d' : '#fff';
+        document.getElementById('script-text').innerHTML = "The signal is strong. It's the <b>" + target.full + "</b>.";
+        updateStats();
+        setTimeout(init, 3000);
     }
+
+    function fail(msg) {
+        clearInterval(timerInterval);
+        sTotal++; cStreak = 0;
+        react('miss');
+        const display = document.getElementById('display-hand');
+        display.innerText = "STATIC";
+        display.classList.remove('ghost-text');
+        display.style.color = "var(--miss)";
+        document.getElementById('script-text').innerText = msg;
+        updateStats();
+        setTimeout(init, 2000);
+    }
+
+    function react(type) {
+        const p = document.getElementById('participant');
+        p.className = type;
+        if(type === 'hit') setTimeout(() => { if(currentPhase < 3) p.className = ""; }, 600);
+    }
+
+    function updateStats() {
+        document.getElementById('session-acc').innerText = Math.round((sCorrect / sTotal) * 100) + "%";
+        document.getElementById('best-streak').innerText = bestStreak;
+    }
+
+    function toggleButtons(isRecall) {
+        document.getElementById('btn-ready').disabled = !isRecall;
+        const b = ['Grinder', 'Premium', 'Red', 'Black', 'pointy', 'round'];
+        b.forEach(id => document.getElementById('btn-'+id).disabled = isRecall);
+    }
+
+    function toggleGhost() {
+        ghostMode = !ghostMode;
+        const btn = document.getElementById('ghost-toggle');
+        btn.innerText = "GHOST MODE: " + (ghostMode ? "ON" : "OFF");
+        btn.classList.toggle('active-mode', ghostMode);
+        document.getElementById('display-hand').classList.toggle('ghost-text', ghostMode);
+    }
+
+    function toggleCheat() {
+        const c = document.getElementById('cheat-sheet');
+        c.style.display = (c.style.display === 'block') ? 'none' : 'block';
+    }
+
+    init();
 </script>
 </body>
 </html>
